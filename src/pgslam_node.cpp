@@ -22,8 +22,7 @@ tf::TransformListener * plistener;
 
 pgslam::Slam slam;
 
-const double r = 0.0325;
-double resolution = 0.03;
+double resolution = 0.05;
 double draw_range = 6.0;
 
 void draw_graph ()

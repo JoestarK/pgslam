@@ -96,17 +96,16 @@ class Slam {
 private:
 	std::vector<LaserScan> scans;
 	Pose2D pose;
-	double tread;
 	double keyscan_threshold;
 	double factor_threshold;
 	GraphSlam graph_slam;
 	void(*pose_update_callback)(void);
 	void(*map_update_callback)(void);
-	Pose2D EncoderToPose2D (double left, double right);
+	Pose2D EncoderToPose2D (double left, double right, double tread);
 public:
 	Slam ();
 	void UpdatePoseWithPose (Pose2D pose);
-	void UpdatePoseWithEncoder (double left, double right);
+	void UpdatePoseWithEncoder (double left, double right, double tread);
 	void UpdatePoseWithLaserScan (const LaserScan &scan);
 	Pose2D get_pose ();
 	const std::vector<LaserScan> & get_scans ();

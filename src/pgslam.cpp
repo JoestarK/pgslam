@@ -490,9 +490,6 @@ void GraphSlam::AddPose2dPose2dFactor (size_t node_id_ref, size_t node_id, Pose2
 
 Slam::Slam ()
 {
-	//tread = 0.392; // real
-	//tread = 0.26; // sim
-	tread = 0.240; // adjust
 	keyscan_threshold = 0.4;
 	factor_threshold = 0.6;
 	//TODO factor > keyscan*2
@@ -515,7 +512,7 @@ std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > Slam::get_factors ()
 	return graph_slam.get_factors();
 }
 
-Pose2D Slam::EncoderToPose2D (double left, double right)
+Pose2D Slam::EncoderToPose2D (double left, double right, double tread)
 {
 	double theta = (right-left) / tread;
 	double theta_2 = theta / 2.0;
@@ -535,9 +532,9 @@ void Slam::UpdatePoseWithPose (Pose2D pose)
 	this->pose = this->pose + pose;
 }
 
-void Slam::UpdatePoseWithEncoder (double left, double right)
+void Slam::UpdatePoseWithEncoder (double left, double right, double tread)
 {
-	pose = pose + EncoderToPose2D (left,right);
+	pose = pose + EncoderToPose2D (left,right,tread);
 	if (pose_update_callback != nullptr)
 		pose_update_callback ();
 }
