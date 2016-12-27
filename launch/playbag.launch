@@ -1,0 +1,7 @@
+<launch>
+	<param name="use_sim_time" value="true"/>
+	<node pkg="pgslam" name="pgslam" type="pgslam" output="screen" />
+	<node pkg="rviz" name="rviz" type="rviz" output="screen" />
+	<node pkg="rosbag" name="play" type="play" output="screen" args="$(find pgslam)/bag/mrpt_world.bag --clock" />
+</launch>
+
