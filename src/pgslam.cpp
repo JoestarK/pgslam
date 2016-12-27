@@ -130,7 +130,7 @@ LaserScan::LaserScan (std::vector<Echo> echos)
 	world_transformed_flag = false;
 
 	match_threshold = 0.1;
-	dist_threshold = 0.3;
+	dist_threshold = 1.0;
 }
 
 LaserScan::LaserScan (std::vector<Echo> echos, Pose2D pose)
@@ -141,7 +141,7 @@ LaserScan::LaserScan (std::vector<Echo> echos, Pose2D pose)
 	world_transformed_flag = false;
 
 	match_threshold = 0.1;
-	dist_threshold = 0.3;
+	dist_threshold = 1.0;
 }
 
 Pose2D LaserScan::get_pose ()
@@ -188,16 +188,17 @@ void LaserScan::UpdateToWorld ()
 
 int LaserScan::nearest (std::vector<Eigen::Vector2d> &v, Eigen::Vector2d p)
 {
-	double dist = 1000000.0;
+	double dist = DBL_MAX;
 	int index_rough=-1,index;
-	for (int i=0; i<v.size(); i+=10) {
+	int speed_up_num = 10;
+	for (int i=0; i<v.size(); i+=speed_up_num) {
 		if ((v[i]-p).norm()<dist) {
 			dist = (v[i]-p).norm();
 			index_rough = i;
 		}
 	}
 	index = index_rough;
-	for (int j=index_rough-10; j<index_rough+10; j++) {
+	for (int j=index_rough-speed_up_num; j<index_rough+speed_up_num; j++) {
 		int i = (j+v.size())%v.size();
 		if ((v[i]-p).norm()<dist) {
 			dist = (v[i]-p).norm();
@@ -337,6 +338,7 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		move /= count;
 		rot /= count;
 
+		// speed up
 		move *= 2.0;
 		rot *= 1.0;
 
