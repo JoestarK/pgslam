@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package>
+  <name>pgslam</name>
+  <version>0.9.9</version>
+  <description>The mapping package</description>
+
+  <license>BSD</license>
+  <url type="website">http://www.todo.com/</url>
+
+  <maintainer email="yukunlin@mail.ustc.edu.cn">Yu Kunlin</maintainer>
+  <author email="yukunlin@mail.ustc.edu.cn">Yu Kunlin</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="pgslam" name="pgslam" type="pgslam" output="screen" />
+	<include file="$(find simulator)/launch/nogui.launch" />
+	<node pkg="rviz" name="rviz" type="rviz" output="screen" />
+</launch>
+
