@@ -1,5 +1,7 @@
 # pgslam
-##install
+##introduction
+pgslam (pose graph slam) is a slam package based on ROS. pgslam reads laser scans and odometry(tf) and publish occupancy map and pose(tf). pgslam dance icp algorithm to get pose as constrain and give these constrains to isam to construct a graph.
+##installation
 1. install ros indigo
  1. sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
  2. sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
