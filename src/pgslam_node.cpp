@@ -22,9 +22,6 @@ tf::TransformListener * plistener;
 
 pgslam::Slam slam;
 
-double resolution = 0.05;
-double draw_range = 6.0;
-
 void draw_graph ()
 {
 	visualization_msgs::Marker points;
@@ -79,6 +76,11 @@ void draw_graph ()
 
 void draw_map ()
 {
+	double resolution = 0.05;
+	double draw_range = 6.0;
+	param::get ("~resolution",resolution);
+	param::get ("~draw_range",draw_range);
+
 	double max_x = 0.0;
 	double min_x = 0.0;
 	double max_y = 0.0;
