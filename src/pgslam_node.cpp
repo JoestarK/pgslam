@@ -22,10 +22,15 @@ tf::TransformListener * plistener;
 
 pgslam::Slam slam;
 
+string map_frame  = "map";
+string odom_frame = "odom";
+string base_frame = "base_link";
+
+
 void draw_graph ()
 {
 	visualization_msgs::Marker points;
-	points.header.frame_id = "map";
+	points.header.frame_id = map_frame;
 	points.header.stamp = Time::now();
 	points.ns = "points_and_lines";
 	points.action = visualization_msgs::Marker::ADD;
@@ -49,7 +54,7 @@ void draw_graph ()
 	node_pub.publish(points);
 
 	visualization_msgs::Marker line_list;
-	line_list.header.frame_id = "map";
+	line_list.header.frame_id = map_frame;
 	line_list.header.stamp = Time::now();
 	line_list.ns = "points_and_lines";
 	line_list.action = visualization_msgs::Marker::ADD;
@@ -135,7 +140,7 @@ void draw_map ()
 
 	// copy eigen map to ros map
 	global_map.header.stamp = Time::now();
-	global_map.header.frame_id = "map"; 
+	global_map.header.frame_id = map_frame;
 	global_map.info.resolution = resolution;
 	global_map.info.map_load_time = Time::now();
 
@@ -193,7 +198,7 @@ void BroadcastMapAndGraph ()
 void BroadcastPose ()
 {
 	pgslam::Pose2D map_pose = slam.get_pose();
-	pgslam::Pose2D odom_pose = ListenPose2D ("odom","base_link");
+	pgslam::Pose2D odom_pose = ListenPose2D (odom_frame, base_frame);
 	pgslam::Pose2D delta = map_pose + odom_pose.inverse();
 
 	tf::StampedTransform transform;
@@ -203,7 +208,7 @@ void BroadcastPose ()
 	transform.setRotation(q);
 
 	static tf::TransformBroadcaster br;
-	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "map", "odom"));
+	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), map_frame, odom_frame));
 }
 
 pgslam::LaserScan RosLaserScan_T_PGSlamLaserScan (const sensor_msgs::LaserScan& msg)
@@ -219,7 +224,7 @@ pgslam::LaserScan RosLaserScan_T_PGSlamLaserScan (const sensor_msgs::LaserScan& 
 void scanCallback (const sensor_msgs::LaserScan& msg)
 {
 	static pgslam::Pose2D odom_old;
-	pgslam::Pose2D odom_new = ListenPose2D ("odom","base_link");
+	pgslam::Pose2D odom_new = ListenPose2D (odom_frame, base_frame);
 	pgslam::Pose2D odom_delta = odom_new - odom_old;
 	odom_old = odom_new;
 	slam.UpdatePoseWithPose (odom_delta);
@@ -241,6 +246,11 @@ int main(int argc, char **argv)
 	slam.RegisterPoseUpdateCallback (BroadcastPose);
 
 	plistener = new tf::TransformListener();
+
+
+	param::get ("~map_frame", map_frame );
+	param::get ("~odom_frame",odom_frame);
+	param::get ("~base_frame",base_frame);
 
 	spin ();
 
