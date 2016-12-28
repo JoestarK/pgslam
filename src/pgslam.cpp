@@ -29,10 +29,12 @@ void Pose2D::set_x(double x)
 {
 	this->x = x;
 }
+
 void Pose2D::set_y(double y)
 {
 	this->y = y;
 }
+
 void Pose2D::set_theta(double theta)
 {
 	this->theta = theta;

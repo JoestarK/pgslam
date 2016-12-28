@@ -26,7 +26,6 @@ string map_frame  = "map";
 string odom_frame = "odom";
 string base_frame = "base_link";
 
-
 void draw_graph ()
 {
 	visualization_msgs::Marker points;
@@ -246,7 +245,6 @@ int main(int argc, char **argv)
 	slam.RegisterPoseUpdateCallback (BroadcastPose);
 
 	plistener = new tf::TransformListener();
-
 
 	param::get ("~map_frame", map_frame );
 	param::get ("~odom_frame",odom_frame);
