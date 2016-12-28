@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(pgslam)
 
-#set (CMAKE_BUILD_TYPE Release)
+set (CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 find_package (catkin REQUIRED COMPONENTS roscpp tf)
@@ -25,4 +25,5 @@ target_link_libraries (pgslam ${catkin_LIBRARIES} isam cholmod)
 
 install (TARGETS   pgslam DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install (DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install (DIRECTORY rviz   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install (DIRECTORY bag    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

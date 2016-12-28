@@ -9,7 +9,7 @@
 		<param name="keyscan_threshold" type="double" value="0.3"/>
 		<param name="factor_threshold"  type="double" value="0.9"/>
 	</node>
-	<node pkg="rviz" name="rviz" type="rviz" output="screen" />
+	<node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(find pgslam)/rviz/pgslam.rviz"/>
 	<node pkg="rosbag" name="play" type="play" output="screen" args="$(find pgslam)/bag/mrpt_world.bag --clock" />
 </launch>
 
