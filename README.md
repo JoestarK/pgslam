@@ -24,4 +24,4 @@ pgslam (pose graph slam) is a slam package based on ROS. pgslam reads laser scan
 ## run
 1. source /opt/ros/indigo/setup.bash
 2. source catkin_ws/install/setup.bash
-3. rosrun pgslam pgslam
+3. roslaunch pgslam playbag.launch
