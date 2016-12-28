@@ -25,6 +25,8 @@ pgslam::Slam slam;
 string map_frame  = "map";
 string odom_frame = "odom";
 string base_frame = "base_link";
+double keyscan_threshold = 0.4;
+double factor_threshold = 0.9;
 
 void draw_graph ()
 {
@@ -235,7 +237,7 @@ int main(int argc, char **argv)
 	init (argc, argv, "pgslam");
 	NodeHandle node;
 
-	Subscriber scan_sub = node.subscribe ("/scan", 1, scanCallback);
+	Subscriber scan_sub = node.subscribe ("/scan", 10, scanCallback);
 
 	node_pub   = node.advertise<visualization_msgs::Marker> ("graph_node", 1);
 	factor_pub = node.advertise<visualization_msgs::Marker> ("graph_factor", 1);
@@ -249,6 +251,11 @@ int main(int argc, char **argv)
 	param::get ("~map_frame", map_frame );
 	param::get ("~odom_frame",odom_frame);
 	param::get ("~base_frame",base_frame);
+	param::get ("~keyscan_threshold", keyscan_threshold);
+	param::get ("~factor_threshold", factor_threshold);
+
+	slam.set_keyscan_threshold (keyscan_threshold);
+	slam.set_factor_threshold (factor_threshold);
 
 	spin ();
 

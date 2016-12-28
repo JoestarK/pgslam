@@ -104,6 +104,8 @@ private:
 	Pose2D EncoderToPose2D (double left, double right, double tread);
 public:
 	Slam ();
+	void set_keyscan_threshold (double keyscan_threshold);
+	void set_factor_threshold (double factor_threshold);
 	void UpdatePoseWithPose (Pose2D pose);
 	void UpdatePoseWithEncoder (double left, double right, double tread);
 	void UpdatePoseWithLaserScan (const LaserScan &scan);

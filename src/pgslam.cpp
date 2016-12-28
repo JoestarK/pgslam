@@ -224,10 +224,15 @@ std::vector<Eigen::Vector2d> LaserScan::transform (const std::vector<Eigen::Vect
 
 Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::Vector2d> scan, double *ratio, Pose2D reference_pose)
 {
+	if (scan_ref.size()<2 || scan.size()<2) {
+		std::cout << "Error: scan.size() < 2";
+		return reference_pose;
+	}
+
 	int insert_num = 7;
 	auto scan_cache = scan_ref;
 	scan_ref.resize(scan_cache.size()*insert_num);
-	for (size_t i=0; i<scan_cache.size()-1; i++) { // TODO size>2
+	for (size_t i=0; i<scan_cache.size()-1; i++) {
 		for (size_t j=0; j<insert_num; j++) {
 			scan_ref[insert_num*i+j] = (scan_cache[i+1] - scan_cache[i]) / insert_num * j + scan_cache[i];
 		}
@@ -495,10 +500,23 @@ void GraphSlam::AddPose2dPose2dFactor (size_t node_id_ref, size_t node_id, Pose2
 Slam::Slam ()
 {
 	keyscan_threshold = 0.4;
-	factor_threshold = 0.6;
-	//TODO factor > keyscan*2
+	factor_threshold = 0.9;
 	pose_update_callback = nullptr;
 	map_update_callback = nullptr;
+}
+
+void Slam::set_keyscan_threshold (double keyscan_threshold)
+{
+	this->keyscan_threshold = keyscan_threshold;
+	if (keyscan_threshold*2 > factor_threshold)
+		factor_threshold = keyscan_threshold*2;
+}
+
+void Slam::set_factor_threshold (double factor_threshold)
+{
+	this->factor_threshold = factor_threshold;
+	if (keyscan_threshold*2 > factor_threshold)
+		keyscan_threshold = factor_threshold/2;
 }
 
 Pose2D Slam::get_pose ()
