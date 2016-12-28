@@ -222,7 +222,7 @@ std::vector<Eigen::Vector2d> LaserScan::transform (const std::vector<Eigen::Vect
 
 Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::Vector2d> scan, double *ratio, Pose2D reference_pose)
 {
-	int insert_num = 10;
+	int insert_num = 7;
 	auto scan_cache = scan_ref;
 	scan_ref.resize(scan_cache.size()*insert_num);
 	for (size_t i=0; i<scan_cache.size()-1; i++) { // TODO size>2
