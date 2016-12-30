@@ -193,7 +193,7 @@ int LaserScan::nearest (std::vector<Eigen::Vector2d> &v, Eigen::Vector2d p)
 	double dist = DBL_MAX;
 	int index_rough=-1,index;
 	int speed_up_num = 10;
-	for (int i=0; i<v.size(); i+=speed_up_num) {
+	for (size_t i=0; i<v.size(); i+=speed_up_num) {
 		if ((v[i]-p).norm()<dist) {
 			dist = (v[i]-p).norm();
 			index_rough = i;
@@ -215,7 +215,7 @@ std::vector<Eigen::Vector2d> LaserScan::transform (const std::vector<Eigen::Vect
 	std::vector<Eigen::Vector2d> v2 (v.size());
 	Eigen::Rotation2D<double> rot (pose.theta);
 	Eigen::Vector2d move (pose.x, pose.y);
-	for (int i=0; i<v.size(); i++) {
+	for (size_t i=0; i<v.size(); i++) {
 		v2[i] = rot * v[i];
 		v2[i] += move;
 	}
@@ -229,7 +229,7 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		return reference_pose;
 	}
 
-	int insert_num = 7;
+	size_t insert_num = 7;
 	auto scan_cache = scan_ref;
 	scan_ref.resize(scan_cache.size()*insert_num);
 	for (size_t i=0; i<scan_cache.size()-1; i++) {
@@ -249,7 +249,7 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 
 		// search and save nearest point
 		int match_count = 0;
-		for (int i=0; i<scan.size(); i++) {
+		for (size_t i=0; i<scan.size(); i++) {
 			Eigen::Vector2d point = scan[i];
 
 			int index = nearest (scan_ref,scan[i]);
@@ -275,9 +275,9 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 			*ratio = (double)match_count/scan.size();
 
 		// disable the points have one same nearest point
-		for (int i=0; i<trace_back.size(); i++)
+		for (size_t i=0; i<trace_back.size(); i++)
 			if (trace_back[i].size()>3)
-				for (int j=0; j<trace_back[i].size(); j++) {
+				for (size_t j=0; j<trace_back[i].size(); j++) {
 					mask[trace_back[i][j]] = false;
 					near [trace_back[i][j]] = scan[trace_back[i][j]];
 				}
@@ -287,9 +287,9 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		std::vector<int>    max_index;
 		max_distance.resize (scan.size()/10,0.0);
 		max_index.resize (scan.size()/10,0);
-		for (int i=0; i<scan.size(); i++) {
+		for (size_t i=0; i<scan.size(); i++) {
 			double distance = (scan[i]-near[i]).norm();
-			for (int j=1; j<max_distance.size(); j++) {
+			for (size_t j=1; j<max_distance.size(); j++) {
 				if (distance>max_distance[j]) {
 					max_distance[j-1] = max_distance[j];
 					max_index[j-1] = max_index[j];
@@ -305,13 +305,13 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 				}
 			}
 		}
-		for (int i=1; i<max_index.size(); i++)
+		for (size_t i=1; i<max_index.size(); i++)
 			mask[max_index[i]] = false;
 
 		// calc center
 		Eigen::Vector2d center(0,0);
 		int count = 0;
-		for (int i=0; i<scan.size(); i++)
+		for (size_t i=0; i<scan.size(); i++)
 			if (mask[i]) {
 				center += scan[i];
 				count ++;
@@ -327,7 +327,7 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		// calc the tramsform
 		Eigen::Vector2d move = Eigen::Vector2d(0.0,0.0);
 		double rot = 0.0;
-		for (int i=0; i<scan.size(); i++) {
+		for (size_t i=0; i<scan.size(); i++) {
 			if (mask[i]==false) continue;
 			Eigen::Vector2d delta = near[i] - scan[i];
 			double length = delta.norm();
@@ -391,20 +391,21 @@ GraphSlam::GraphSlam ()
 	slam = new isam::Slam();
 }
 
-bool GraphSlam::check (int id)
+bool GraphSlam::check (size_t id)
 {
 	// size enough
-	if (id<pose_nodes.size())
+	if (id<pose_nodes.size()) {
 		if (pose_nodes[id]==NULL) {	// already been removed
 			pose_nodes[id] = new isam::Pose2d_Node();
 			return true;
 		}
 		else return false;	// still there
+  }
 
 	// create new space
 	int size = pose_nodes.size();
 	pose_nodes.resize(id+1);
-	for (int i=size; i<id+1; i++)
+	for (size_t i=size; i<id+1; i++)
 		pose_nodes[i] = new isam::Pose2d_Node();
 	return true;
 }
@@ -577,7 +578,7 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 	}
 
 	// search for the closest scan
-	LaserScan *closest_scan;
+	LaserScan *closest_scan = &(scans[0]);
 	double min_dist = DBL_MAX;
 	for (size_t i=0; i<scans.size(); i++) {
 		double dist = (scans[i].get_pose().pos() - scan.get_pose().pos()).norm();
@@ -613,7 +614,7 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 		auto nodes = graph_slam.get_nodes ();
 		for (size_t i=0; i<nodes.size(); i++) {
 			// update pose of node
-			for (int j=0; j<scans.size(); j++) {
+			for (size_t j=0; j<scans.size(); j++) {
 				if (j != nodes[i].first) continue;
 				scans[j].set_pose (nodes[i].second);
 				break;

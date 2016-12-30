@@ -80,7 +80,7 @@ class GraphSlam {
 private:
 	isam::Slam * slam;
 	std::vector<isam::Pose2d_Node*> pose_nodes;
-	bool check (int id);
+	bool check (size_t id);
 
 public:
 	GraphSlam ();
