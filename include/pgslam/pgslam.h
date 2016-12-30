@@ -21,11 +21,13 @@ public:
 	void set_x(double x);
 	void set_y(double y);
 	void set_theta(double theta);
+	double get_x();
+	double get_y();
+	double get_theta ();
 	Pose2D operator + (Pose2D p);
 	Pose2D operator - (Pose2D p);
 	Pose2D inverse ();
 	Eigen::Vector2d pos ();
-	double get_theta ();
 	std::string to_string ();
 };
 

@@ -42,6 +42,21 @@ void Pose2D::set_theta(double theta)
 	while (this->theta> M_PI) this->theta -= 2 * M_PI;
 }
 
+double Pose2D::get_x()
+{
+	return x;
+}
+
+double Pose2D::get_y()
+{
+	return y;
+}
+
+double Pose2D::get_theta ()
+{
+	return theta;
+}
+
 Pose2D Pose2D::operator + (Pose2D p)
 {
 	Eigen::Vector2d v1(x,y);
@@ -68,11 +83,6 @@ Pose2D Pose2D::operator - (Pose2D p)
 Eigen::Vector2d Pose2D::pos ()
 {
 	return Eigen::Vector2d (x,y);
-}
-
-double Pose2D::get_theta ()
-{
-	return theta;
 }
 
 std::string Pose2D::to_string ()
@@ -460,7 +470,7 @@ std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > GraphSlam::get_factor
 
 void GraphSlam::AddPose2dFactor (size_t node_id, Pose2D pose_ros, double cov)
 {
-	isam::Pose2d pose (pose_ros.pos().x(), pose_ros.pos().y(), pose_ros.get_theta());
+	isam::Pose2d pose (pose_ros.get_x(), pose_ros.get_y(), pose_ros.get_theta());
 	if (cov<=0) {
 		cov = 1.0;
 	}
@@ -479,7 +489,7 @@ void GraphSlam::AddPose2dFactor (size_t node_id, Pose2D pose_ros, double cov)
 
 void GraphSlam::AddPose2dPose2dFactor (size_t node_id_ref, size_t node_id, Pose2D pose_ros, double cov)
 {
-	isam::Pose2d pose (pose_ros.pos().x(), pose_ros.pos().y(), pose_ros.get_theta());
+	isam::Pose2d pose (pose_ros.get_x(), pose_ros.get_y(), pose_ros.get_theta());
 	if (cov<=0) {
 		cov = 1.0;
 	}
