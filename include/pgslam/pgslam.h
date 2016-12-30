@@ -92,6 +92,7 @@ public:
 	std::vector< std::pair<size_t, Pose2D> > get_nodes ();
 	std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors ();
 	void clear ();
+	void Optimization ();
 };
 
 class Slam {

@@ -484,7 +484,7 @@ void GraphSlam::AddPose2dFactor (size_t node_id, Pose2D pose_ros, double cov)
 	isam::Pose2d_Factor * factor = new isam::Pose2d_Factor(pose_nodes[node_id], pose, noise);
 	slam->add_factor(factor);
 
-	slam->batch_optimization();
+	//slam->batch_optimization();
 }
 
 void GraphSlam::AddPose2dPose2dFactor (size_t node_id_ref, size_t node_id, Pose2D pose_ros, double cov)
@@ -505,6 +505,11 @@ void GraphSlam::AddPose2dPose2dFactor (size_t node_id_ref, size_t node_id, Pose2
 	isam::Pose2d_Pose2d_Factor * factor = new isam::Pose2d_Pose2d_Factor(pose_nodes[node_id_ref], pose_nodes[node_id], pose, noise);
 	slam->add_factor(factor);
 
+	//slam->batch_optimization();
+}
+
+void GraphSlam::Optimization ()
+{
 	slam->batch_optimization();
 }
 
@@ -604,6 +609,7 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 		}
 	}
 
+
 	if (min_dist < keyscan_threshold) {
 		// update pose
 		double ratio;
@@ -618,6 +624,9 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 				double ratio;
 				Pose2D pose_delta = scans[i].ICP (scan, &ratio);
 				graph_slam.AddPose2dPose2dFactor (i, scans.size(), pose_delta, ratio);
+				graph_slam.Optimization ();
+				if (pose_update_callback != nullptr)
+					pose_update_callback ();
 			}
 		}
 
