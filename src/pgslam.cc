@@ -1,9 +1,11 @@
 #include <pgslam/pgslam.h>
+#include <pgslam/kdtree2d.h>
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <float.h>
+#include <sys/time.h>
 
 #include <Eigen/Eigen>
 
@@ -198,6 +200,7 @@ void LaserScan::UpdateToWorld ()
 	world_transformed_flag = true;
 }
 
+/*
 int LaserScan::nearest (std::vector<Eigen::Vector2d> &v, Eigen::Vector2d p)
 {
 	double dist = DBL_MAX;
@@ -219,6 +222,7 @@ int LaserScan::nearest (std::vector<Eigen::Vector2d> &v, Eigen::Vector2d p)
 	}
 	return index;
 }
+*/
 
 std::vector<Eigen::Vector2d> LaserScan::transform (const std::vector<Eigen::Vector2d> &v, Pose2D pose)
 {
@@ -248,9 +252,11 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		}
 	}
 
+	kd_tree_2d::KDTree2D tree;
+	tree.Construct (scan_ref);
 	std::vector<Eigen::Vector2d> scan_origin = scan;
 	Pose2D pose = reference_pose;
-	for (int i=0; i<20; i++) {
+	for (int i=0; i<10; i++) {
 		scan = transform (scan_origin, pose);
 
 		std::vector<Eigen::Vector2d>    near = scan;                 // store the closest point
@@ -262,7 +268,9 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		for (size_t i=0; i<scan.size(); i++) {
 			Eigen::Vector2d point = scan[i];
 
-			int index = nearest (scan_ref,scan[i]);
+			//int index = nearest (scan_ref,scan[i]);
+			size_t index = tree.NearestIndex (scan[i]);
+
 			if (index==-1) {
 				if (ratio!=nullptr)
 					*ratio = 0.0;
@@ -624,11 +632,11 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 				double ratio;
 				Pose2D pose_delta = scans[i].ICP (scan, &ratio);
 				graph_slam.AddPose2dPose2dFactor (i, scans.size(), pose_delta, ratio);
-				graph_slam.Optimization ();
 				if (pose_update_callback != nullptr)
 					pose_update_callback ();
 			}
 		}
+		graph_slam.Optimization ();
 
 		auto nodes = graph_slam.get_nodes ();
 		for (size_t i=0; i<nodes.size(); i++) {

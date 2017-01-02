@@ -118,7 +118,7 @@ void draw_map ()
 		auto points = scans[i].get_points();
 		for (int j=1; j<points.size(); j++) {	// for every point
 			Eigen::Vector2d v = points[j] - origin;
-			if (v.norm()>draw_range) 
+			if (v.norm()>draw_range)
 				v = v.normalized() * (draw_range + resolution);
 			int steps = v.norm()/resolution;
 			Eigen::Vector2d step = v/steps/resolution;

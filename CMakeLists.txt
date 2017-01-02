@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(pgslam)
 
 set (CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -pg ${CMAKE_CXX_FLAGS}")
 
 find_package (catkin REQUIRED COMPONENTS roscpp tf)
 
@@ -20,7 +20,7 @@ if (isam_INCLUDE_DIR MATCHES isam_INCLUDE_DIR-NOTFOUND OR isam_LIBRARY MATCHES i
 	message (FATAL_ERROR "please install isam first")
 endif ()
 
-add_executable (pgslam src/pgslam_node.cpp src/pgslam.cpp)
+add_executable (pgslam src/pgslam_node.cc src/pgslam.cc src/kdtree2d.cc)
 target_link_libraries (pgslam ${catkin_LIBRARIES} isam cholmod)
 
 install (TARGETS   pgslam DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
