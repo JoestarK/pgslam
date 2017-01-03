@@ -66,6 +66,7 @@ void draw_graph ()
 	line_list.color.r = 0.5;
 	line_list.color.a = 1.0;
 
+#ifdef USE_ISAM
 	vector< pair<Eigen::Vector2d, Eigen::Vector2d> > factors = slam.get_factors ();
 	for (size_t i=0; i<factors.size(); i++) {
 		geometry_msgs::Point first;
@@ -78,6 +79,7 @@ void draw_graph ()
 		line_list.points.push_back (second);
 	}
 	factor_pub.publish(line_list);
+#endif
 }
 
 void draw_map ()

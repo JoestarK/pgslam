@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(pgslam)
 
 set (CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-std=c++11 -pg ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -DUSE_ISAM ${CMAKE_CXX_FLAGS}")
 
 find_package (catkin REQUIRED COMPONENTS roscpp tf)
 

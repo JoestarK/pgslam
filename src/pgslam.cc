@@ -256,7 +256,7 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 	tree.Construct (scan_ref);
 	std::vector<Eigen::Vector2d> scan_origin = scan;
 	Pose2D pose = reference_pose;
-	for (int i=0; i<10; i++) {
+	for (int i=0; i<20; i++) {
 		scan = transform (scan_origin, pose);
 
 		std::vector<Eigen::Vector2d>    near = scan;                 // store the closest point
@@ -404,6 +404,7 @@ double LaserScan::get_min_y_in_world ()
 	return min_y;
 }
 
+#ifdef USE_ISAM
 GraphSlam::GraphSlam ()
 {
 	slam = new isam::Slam();
@@ -520,6 +521,7 @@ void GraphSlam::Optimization ()
 {
 	slam->batch_optimization();
 }
+#endif
 
 Slam::Slam ()
 {
@@ -553,10 +555,12 @@ const std::vector<LaserScan> & Slam::get_scans ()
 	return scans;
 }
 
+#ifdef USE_ISAM
 std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > Slam::get_factors ()
 {
 	return graph_slam.get_factors();
 }
+#endif
 
 Pose2D Slam::EncoderToPose2D (double left, double right, double tread)
 {
@@ -593,7 +597,9 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 	// first scan
 	if (scans.empty()) {
 		scans.push_back (scan);
+#ifdef USE_ISAM
 		graph_slam.AddPose2dFactor (0,pose,1);
+#endif
 		std::cout << "add key scan " << scans.size() << ": " << pose.to_string() << std::endl;
 		if (map_update_callback != nullptr)
 			map_update_callback ();
@@ -626,6 +632,7 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 	}
 	else {
 		// add key scan
+#ifdef USE_ISAM
 		for (size_t i=0; i<scans.size(); i++) {
 			double distance = (pose.pos() - scans[i].get_pose().pos()).norm();
 			if (distance<factor_threshold) {
@@ -654,6 +661,9 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 			}
 
 		}
+#else
+		scans.push_back (scan);
+#endif
 		std::cout << "add key scan " << scans.size() << ": " << pose.to_string() << std::endl;
 
 		if (map_update_callback != nullptr)

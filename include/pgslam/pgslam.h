@@ -5,7 +5,9 @@
 #include <string>
 
 #include <Eigen/Eigen>
-#include <isam/isam.h>
+#ifdef USE_ISAM
+#  include <isam/isam.h>
+#endif
 
 namespace pgslam {
 
@@ -78,6 +80,8 @@ public:
 
 };
 
+
+#ifdef USE_ISAM
 class GraphSlam {
 private:
 	isam::Slam * slam;
@@ -94,6 +98,7 @@ public:
 	void clear ();
 	void Optimization ();
 };
+#endif
 
 class Slam {
 private:
@@ -101,7 +106,9 @@ private:
 	Pose2D pose;
 	double keyscan_threshold;
 	double factor_threshold;
+#ifdef USE_ISAM
 	GraphSlam graph_slam;
+#endif
 	void(*pose_update_callback)(void);
 	void(*map_update_callback)(void);
 	Pose2D EncoderToPose2D (double left, double right, double tread);
@@ -114,7 +121,9 @@ public:
 	void UpdatePoseWithLaserScan (const LaserScan &scan);
 	Pose2D get_pose ();
 	const std::vector<LaserScan> & get_scans ();
+#ifdef USE_ISAM
 	std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors ();
+#endif
 	void RegisterPoseUpdateCallback (void(*f)(void));
 	void RegisterMapUpdateCallback (void(*f)(void));
 };
