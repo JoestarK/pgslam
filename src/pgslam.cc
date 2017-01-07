@@ -633,9 +633,11 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 	else {
 		// add key scan
 #ifdef USE_ISAM
+		size_t constrain_count = 0;
 		for (size_t i=0; i<scans.size(); i++) {
 			double distance = (pose.pos() - scans[i].get_pose().pos()).norm();
 			if (distance<factor_threshold) {
+				constrain_count ++;
 				double ratio;
 				Pose2D pose_delta = scans[i].ICP (scan, &ratio);
 				graph_slam.AddPose2dPose2dFactor (i, scans.size(), pose_delta, ratio);
@@ -643,7 +645,8 @@ void Slam::UpdatePoseWithLaserScan (const LaserScan &scan_)
 					pose_update_callback ();
 			}
 		}
-		graph_slam.Optimization ();
+		if (constrain_count>1)
+			graph_slam.Optimization ();
 
 		auto nodes = graph_slam.get_nodes ();
 		for (size_t i=0; i<nodes.size(); i++) {
