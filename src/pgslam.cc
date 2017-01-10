@@ -367,9 +367,9 @@ Pose2D LaserScan::icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::
 		move *= 2.0;
 		rot *= 1.0;
 
-		pose.x += move.x();
-		pose.y += move.y();
-		pose.theta += rot;
+		Pose2D pose_delta = Pose2D (move.x(), move.y(), rot);
+		pose_delta = (pose.inverse() + pose_delta + pose);
+		pose = pose + pose_delta;
 	}
 	return pose;
 }
