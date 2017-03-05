@@ -2,4 +2,6 @@ language: c++
 xcode_project: CMakeLists.txt
 script:
   - cmake . && make && make test
+install:
+  - sudo apt-get install ros-indigo-catkin
 xcode_scheme: pgslam_scheme
