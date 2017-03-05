@@ -1,0 +1,3 @@
+language: c++
+xcode_project: CMakeLists.txt
+xcode_scheme: pgslam_scheme
