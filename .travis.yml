@@ -1,3 +1,5 @@
 language: c++
 xcode_project: CMakeLists.txt
+script:
+  - cmake . && make && make test
 xcode_scheme: pgslam_scheme
