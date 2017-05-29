@@ -1,134 +1,145 @@
-#ifndef _PGSLAM_H_
-#define _PGSLAM_H_
-
-#include <vector>
-#include <string>
+/*
+ * Copyright 2017 Yu Kunlin <yukunlin@mail.ustc.edu.cn>
+ */
+#ifndef PGSLAM_H_
+#define PGSLAM_H_
 
 #include <Eigen/Eigen>
 #ifdef USE_ISAM
 #  include <isam/isam.h>
 #endif
 
+#include <vector>
+#include <string>
+#include <utility>
+
 namespace pgslam {
 
 class Pose2D {
-friend class LaserScan;
-private:
-	double x;
-	double y;
-	double theta;
-public:
-	Pose2D ();
-	Pose2D (double x, double y, double theta);
-	void set_x(double x);
-	void set_y(double y);
-	void set_theta(double theta);
-	double get_x();
-	double get_y();
-	double get_theta ();
-	Pose2D operator + (Pose2D p);
-	Pose2D operator - (Pose2D p);
-	Pose2D inverse ();
-	Eigen::Vector2d pos ();
-	std::string to_string ();
+ public:
+  Pose2D();
+  Pose2D(double x, double y, double theta);
+  void set_x(double x);
+  void set_y(double y);
+  void set_theta(double theta);
+  double x();
+  double y();
+  double theta();
+  Pose2D operator +(Pose2D p);
+  Pose2D operator -(Pose2D p);
+  Pose2D inverse();
+  Eigen::Vector2d pos();
+  std::string to_string();
+ private:
+  double x_;
+  double y_;
+  double theta_;
+  friend class LaserScan;
 };
 
 class Echo {
-private:
-	double range;
-	double angle;
-	double intensity;
-	int64_t time_stamp;
-public:
-	Echo (double range, double angle, double intensity, int64_t time_stamp);
-	double get_range ();
-	double get_angle ();
-	double get_intensity ();
-	int64_t get_time_stamp ();
-	Eigen::Vector2d get_point ();
+ private:
+  double range_;
+  double angle_;
+  double intensity_;
+  int64_t time_stamp_;
+ public:
+  Echo(double range, double angle, double intensity, int64_t time_stamp);
+  double get_range();
+  double get_angle();
+  double get_intensity();
+  int64_t get_time_stamp();
+  Eigen::Vector2d get_point();
 };
 
 class LaserScan {
-private:
-	std::vector<Eigen::Vector2d> points_self;
-	std::vector<Eigen::Vector2d> points_world;
-	Pose2D pose;
-	bool world_transformed_flag;
-	void UpdateToWorld ();
-	double max_x;
-	double min_x;
-	double max_y;
-	double min_y;
+ public:
+  explicit LaserScan(std::vector<Echo> echos);
+  LaserScan(std::vector<Echo> echos, Pose2D pose);
+  Pose2D get_pose() const;
+  void set_pose(Pose2D pose);
+  const std::vector<Eigen::Vector2d> & get_points();
+  Pose2D ICP(const LaserScan &scan, double *ratio);
+  double get_max_x_in_world();
+  double get_min_x_in_world();
+  double get_max_y_in_world();
+  double get_min_y_in_world();
 
-	double match_threshold;
-	double dist_threshold;
+ private:
+  std::vector<Eigen::Vector2d>
+    transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose);
+  Pose2D icp(std::vector<Eigen::Vector2d> scan_ref,
+      std::vector<Eigen::Vector2d> scan, double *ratio, Pose2D reference_pose);
 
-	std::vector<Eigen::Vector2d> transform (const std::vector<Eigen::Vector2d> &v, Pose2D pose);
-	Pose2D icp(std::vector<Eigen::Vector2d> scan_ref, std::vector<Eigen::Vector2d> scan, double *ratio, Pose2D reference_pose);
-	int nearest (std::vector<Eigen::Vector2d> &v, Eigen::Vector2d p);
-public:
-	LaserScan (std::vector<Echo> echos);
-	LaserScan (std::vector<Echo> echos, Pose2D pose);
-	Pose2D get_pose ();
-	void set_pose (Pose2D pose);
-	const std::vector<Eigen::Vector2d> & get_points ();
-	Pose2D ICP (const LaserScan &scan, double *ratio);
-	double get_max_x_in_world ();
-	double get_min_x_in_world ();
-	double get_max_y_in_world ();
-	double get_min_y_in_world ();
+ private:
+  std::vector<Eigen::Vector2d> points_self_;
+  std::vector<Eigen::Vector2d> points_world_;
+  Pose2D pose_;
+  bool world_transformed_flag_;
+  void UpdateToWorld();
+  double max_x_;
+  double min_x_;
+  double max_y_;
+  double min_y_;
 
+  double match_threshold_;
+  double dist_threshold_;
 };
 
 
 #ifdef USE_ISAM
 class GraphSlam {
-private:
-	isam::Slam * slam;
-	std::vector<isam::Pose2d_Node*> pose_nodes;
-	bool check (size_t id);
+ public:
+  GraphSlam();
+  void AddPose2dFactor(size_t node_id, Pose2D pose_ros, double cov);
+  void AddPose2dPose2dFactor(size_t node_id_ref,
+      size_t node_id, Pose2D pose_ros, double cov);
+  void remove(size_t node_id);
+  std::vector< std::pair<size_t, Pose2D> > get_nodes();
+  std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors();
+  void clear();
+  void Optimization();
 
-public:
-	GraphSlam ();
-	void AddPose2dFactor (size_t node_id, Pose2D pose_ros, double cov);
-	void AddPose2dPose2dFactor (size_t node_id_ref, size_t node_id, Pose2D pose_ros, double cov);
-	void remove (size_t node_id);
-	std::vector< std::pair<size_t, Pose2D> > get_nodes ();
-	std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors ();
-	void clear ();
-	void Optimization ();
+ private:
+  bool check(size_t id);
+
+ private:
+  isam::Slam * slam_;
+  std::vector<isam::Pose2d_Node*> pose_nodes_;
 };
 #endif
 
 class Slam {
-private:
-	std::vector<LaserScan> scans;
-	Pose2D pose;
-	double keyscan_threshold;
-	double factor_threshold;
+ public:
+  Slam();
+  void set_keyscan_threshold(double keyscan_threshold);
+  void set_factor_threshold(double factor_threshold);
+  void UpdatePoseWithPose(Pose2D pose);
+  void UpdatePoseWithEncoder(double left, double right, double tread);
+  void UpdatePoseWithLaserScan(const LaserScan &scan);
+  Pose2D get_pose() const;
+  const std::vector<LaserScan> & get_scans();
 #ifdef USE_ISAM
-	GraphSlam graph_slam;
+  std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors();
 #endif
-	void(*pose_update_callback)(void);
-	void(*map_update_callback)(void);
-	Pose2D EncoderToPose2D (double left, double right, double tread);
-public:
-	Slam ();
-	void set_keyscan_threshold (double keyscan_threshold);
-	void set_factor_threshold (double factor_threshold);
-	void UpdatePoseWithPose (Pose2D pose);
-	void UpdatePoseWithEncoder (double left, double right, double tread);
-	void UpdatePoseWithLaserScan (const LaserScan &scan);
-	Pose2D get_pose ();
-	const std::vector<LaserScan> & get_scans ();
+  void RegisterPoseUpdateCallback(void(*f)(void));
+  void RegisterMapUpdateCallback(void(*f)(void));
+
+ private:
+  Pose2D EncoderToPose2D(double left, double right, double tread);
+
+ private:
+  std::vector<LaserScan> scans_;
+  Pose2D pose_;
+  double keyscan_threshold_;
+  double factor_threshold_;
 #ifdef USE_ISAM
-	std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors ();
+  GraphSlam graph_slam_;
 #endif
-	void RegisterPoseUpdateCallback (void(*f)(void));
-	void RegisterMapUpdateCallback (void(*f)(void));
+  void(*pose_update_callback)(void);
+  void(*map_update_callback)(void);
 };
 
-} // namespace pose_graph_slam
+}  // namespace pgslam
 
-#endif
-
+#endif  // PGSLAM_H_
