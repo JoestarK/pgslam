@@ -96,8 +96,8 @@ class GraphSlam {
   void AddPose2dPose2dFactor(size_t node_id_ref,
       size_t node_id, Pose2D pose_ros, double cov);
   void remove(size_t node_id);
-  std::vector< std::pair<size_t, Pose2D> > get_nodes();
-  std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors();
+  std::vector<std::pair<size_t, Pose2D>> get_nodes();
+  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> get_factors();
   void clear();
   void Optimization();
 
@@ -121,7 +121,7 @@ class Slam {
   Pose2D get_pose() const;
   const std::vector<LaserScan> & get_scans();
 #ifdef USE_ISAM
-  std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors();
+  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> get_factors();
 #endif
   void RegisterPoseUpdateCallback(std::function<void(Pose2D)> f);
   void RegisterMapUpdateCallback(std::function<void(void)> f);

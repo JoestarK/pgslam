@@ -206,7 +206,7 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     // store the closest point
     std::vector<Eigen::Vector2d>    near = scan;
     // to trace some points have a same closest point
-    std::vector< std::vector<int> > trace_back(scan_ref.size());
+    std::vector<std::vector<int>> trace_back(scan_ref.size());
     // true: effective point; false: non-effective point;
     std::vector<bool> mask(scan.size());
 
@@ -377,8 +377,8 @@ void GraphSlam::clear() {
   std::vector<isam::Pose2d_Node*>().swap(pose_nodes_);
 }
 
-std::vector< std::pair<size_t, Pose2D> > GraphSlam::get_nodes() {
-  std::vector< std::pair<size_t, Pose2D> > pose_id;
+std::vector<std::pair<size_t, Pose2D>> GraphSlam::get_nodes() {
+  std::vector<std::pair<size_t, Pose2D>> pose_id;
   // store in response
   for (size_t i = 0; i < pose_nodes_.size(); i++) {
     if (pose_nodes_[i] == NULL) continue;
@@ -391,9 +391,9 @@ std::vector< std::pair<size_t, Pose2D> > GraphSlam::get_nodes() {
   return pose_id;
 }
 
-std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> >
+std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>>
 GraphSlam::get_factors() {
-  std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > factors;
+  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> factors;
   const std::list<isam::Factor*> factors_ = slam_->get_factors();
   for (std::list<isam::Factor*>::const_iterator it=factors_.begin();
       it != factors_.end(); it++) {
@@ -481,7 +481,7 @@ const std::vector<LaserScan> & Slam::get_scans() {
 }
 
 #ifdef USE_ISAM
-std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > Slam::get_factors() {
+std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> Slam::get_factors() {
   return graph_slam_.get_factors();
 }
 #endif
