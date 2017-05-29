@@ -170,7 +170,6 @@ pgslam::Pose2D ListenPose2D (string target_frame, string source_frame)
 	pgslam::Pose2D pose;
 	// listen
 	tf::StampedTransform transform;
-	Time past = Time::now() - Duration(0.1);
 	std::string s;
 	try {
 		plistener->waitForTransform(target_frame, source_frame, Time(0), Duration(2.0), Duration(0.01), &s);
