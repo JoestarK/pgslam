@@ -13,6 +13,7 @@
 #include <pgslam/pgslam.h>
 
 #include <string>
+#include <functional>
 
 ros::Publisher node_pub;
 ros::Publisher factor_pub;
@@ -206,10 +207,9 @@ void BroadcastMapAndGraph() {
   draw_map();
 }
 
-void BroadcastPose() {
-  pgslam::Pose2D map_pose = slam.get_pose();
+void BroadcastPose(pgslam::Pose2D pose) {
   pgslam::Pose2D odom_pose = ListenPose2D(odom_frame, base_frame);
-  pgslam::Pose2D delta = map_pose + odom_pose.inverse();
+  pgslam::Pose2D delta = pose + odom_pose.inverse();
 
   tf::StampedTransform transform;
   transform.setOrigin(tf::Vector3(delta.pos().x(), delta.pos().y(), 0.0));
@@ -252,8 +252,10 @@ int main(int argc, char **argv) {
   factor_pub = node.advertise<visualization_msgs::Marker>("graph_factor", 1);
   map_pub    = node.advertise<nav_msgs::OccupancyGrid>("/map", 1);
 
-  slam.RegisterMapUpdateCallback(BroadcastMapAndGraph);
-  slam.RegisterPoseUpdateCallback(BroadcastPose);
+  std::function<void(void)> MapUpdateCallback = BroadcastMapAndGraph;
+  slam.RegisterMapUpdateCallback(MapUpdateCallback);
+  std::function<void(pgslam::Pose2D)> PoseUpdateCallback = BroadcastPose;
+  slam.RegisterPoseUpdateCallback(PoseUpdateCallback);
 
   plistener = new tf::TransformListener();
 

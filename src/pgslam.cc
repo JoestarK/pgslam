@@ -458,8 +458,6 @@ void GraphSlam::Optimization() {
 Slam::Slam() {
   keyscan_threshold_ = 0.4;
   factor_threshold_ = 0.9;
-  pose_update_callback = nullptr;
-  map_update_callback = nullptr;
 }
 
 void Slam::set_keyscan_threshold(double keyscan_threshold) {
@@ -508,8 +506,8 @@ void Slam::UpdatePoseWithPose(Pose2D pose) {
 
 void Slam::UpdatePoseWithEncoder(double left, double right, double tread) {
   pose_ = pose_ + EncoderToPose2D(left, right, tread);
-  if (pose_update_callback != nullptr)
-    pose_update_callback();
+  if (pose_update_callback)
+    pose_update_callback(pose_);
 }
 
 void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
@@ -524,7 +522,7 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
 #endif
     std::cout << "add key scan " << scans_.size() << ": "
       << pose_.to_string() << std::endl;
-    if (map_update_callback != nullptr)
+    if (map_update_callback)
       map_update_callback();
     return;
   }
@@ -565,8 +563,8 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
         double ratio;
         Pose2D pose_delta = scans_[i].ICP(scan, &ratio);
         graph_slam_.AddPose2dPose2dFactor(i, scans_.size(), pose_delta, ratio);
-        if (pose_update_callback != nullptr)
-          pose_update_callback();
+        if (pose_update_callback)
+          pose_update_callback(pose_);
       }
     }
     if (constrain_count > 1)
@@ -593,17 +591,17 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
     std::cout << "add key scan " << scans_.size() << ": "
       << pose_.to_string() << std::endl;
 
-    if (map_update_callback != nullptr)
+    if (map_update_callback)
       map_update_callback();
   }
-  if (pose_update_callback != nullptr)
-    pose_update_callback();
+  if (pose_update_callback)
+    pose_update_callback(pose_);
 }
 
-void Slam::RegisterPoseUpdateCallback (void(*f)(void)) {
+void Slam::RegisterPoseUpdateCallback(std::function<void(Pose2D)> f) {
   pose_update_callback = f;
 }
-void Slam::RegisterMapUpdateCallback (void(*f)(void)) {
+void Slam::RegisterMapUpdateCallback(std::function<void(void)> f) {
   map_update_callback = f;
 }
 

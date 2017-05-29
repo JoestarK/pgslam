@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <functional>
 
 namespace pgslam {
 
@@ -122,8 +123,8 @@ class Slam {
 #ifdef USE_ISAM
   std::vector< std::pair<Eigen::Vector2d, Eigen::Vector2d> > get_factors();
 #endif
-  void RegisterPoseUpdateCallback(void(*f)(void));
-  void RegisterMapUpdateCallback(void(*f)(void));
+  void RegisterPoseUpdateCallback(std::function<void(Pose2D)> f);
+  void RegisterMapUpdateCallback(std::function<void(void)> f);
 
  private:
   Pose2D EncoderToPose2D(double left, double right, double tread);
@@ -136,8 +137,8 @@ class Slam {
 #ifdef USE_ISAM
   GraphSlam graph_slam_;
 #endif
-  void(*pose_update_callback)(void);
-  void(*map_update_callback)(void);
+  std::function<void(Pose2D)> pose_update_callback;
+  std::function<void(void)> map_update_callback;
 };
 
 }  // namespace pgslam
