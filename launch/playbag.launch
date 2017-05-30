@@ -10,6 +10,6 @@
 		<param name="factor_threshold"  type="double" value="1.0"/>
 	</node>
 	<node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(find pgslam)/rviz/pgslam.rviz"/>
-	<node pkg="rosbag" name="play" type="play" output="screen" args="$(find pgslam)/bag/mrpt_world.bag --clock" />
+	<node pkg="rosbag" name="play" type="play" output="screen" args="$(find pgslam)/bag/mrpt_world.bag --clock -r 2" />
 </launch>
 

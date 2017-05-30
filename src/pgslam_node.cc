@@ -209,7 +209,7 @@ void BroadcastMapAndGraph() {
 
 void BroadcastPose(pgslam::Pose2D pose) {
   pgslam::Pose2D odom_pose = ListenPose2D(odom_frame, base_frame);
-  pgslam::Pose2D delta = pose + odom_pose.inverse();
+  pgslam::Pose2D delta = odom_pose.inverse() * pose;
 
   tf::StampedTransform transform;
   transform.setOrigin(tf::Vector3(delta.pos().x(), delta.pos().y(), 0.0));

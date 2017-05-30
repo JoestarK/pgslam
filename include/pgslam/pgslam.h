@@ -23,14 +23,14 @@ class Pose2D {
   void set_x(double x);
   void set_y(double y);
   void set_theta(double theta);
-  double x();
-  double y();
-  double theta();
-  Pose2D operator +(Pose2D p);
-  Pose2D operator -(Pose2D p);
-  Pose2D inverse();
-  Eigen::Vector2d pos();
-  std::string to_string();
+  double x() const;
+  double y() const;
+  double theta() const;
+  Pose2D operator *(Pose2D p) const;
+  Pose2D operator -(Pose2D p) const;
+  Pose2D inverse() const;
+  Eigen::Vector2d pos() const;
+  std::string to_string() const;
  private:
   double x_;
   double y_;

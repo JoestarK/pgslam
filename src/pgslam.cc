@@ -42,37 +42,29 @@ void Pose2D::set_theta(double theta) {
   while (theta_ >  M_PI) theta_ -= 2 * M_PI;
 }
 
-double Pose2D::x() { return x_; }
+double Pose2D::x() const { return x_; }
+double Pose2D::y() const { return y_; }
+double Pose2D::theta () const { return theta_; }
 
-double Pose2D::y() { return y_; }
-
-double Pose2D::theta () { return theta_; }
-
-Pose2D Pose2D::operator +(Pose2D p) {
-  Eigen::Vector2d v1(x_, y_);
-  Eigen::Vector2d v2(p.x_, p.y_);
-  Eigen::Rotation2D<double> rot(theta_);
-  v2 = rot * v2;
-  Eigen::Vector2d v = v1 + v2;
+Pose2D Pose2D::operator *(Pose2D p) const {
+  Eigen::Vector2d v = p.pos() + Eigen::Rotation2D<double>(p.theta_) * pos();
   return Pose2D(v.x(), v.y(), theta_ + p.theta_);
 }
 
-Pose2D Pose2D::inverse() {
-  Eigen::Vector2d v(-x_ , -y_);
-  Eigen::Rotation2D<double> rot(-theta_);
-  v = rot * v;
-  return Pose2D(v.x(), v.y(), -theta_);
+Pose2D Pose2D::inverse() const {
+  Eigen::Vector2d v = Eigen::Rotation2D<double>(-theta_) * pos();
+  return Pose2D (-v.x(), -v.y(), -theta_);
 }
 
-Pose2D Pose2D::operator - (Pose2D p) {
-  return p.inverse() + *this;
+Pose2D Pose2D::operator -(Pose2D p) const {
+  return *this * p.inverse();
 }
 
-Eigen::Vector2d Pose2D::pos() {
+Eigen::Vector2d Pose2D::pos() const {
   return Eigen::Vector2d(x_, y_);
 }
 
-std::string Pose2D::to_string() {
+std::string Pose2D::to_string() const {
   std::stringstream ss;
   ss << "x:";
   ss << std::setw(7) << setiosflags(std::ios::fixed) << std::setprecision(4);
@@ -314,8 +306,8 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     rot *= 1.0;
 
     Pose2D pose_delta = Pose2D(move.x(), move.y(), rot);
-    pose_delta = (pose.inverse() + pose_delta + pose);
-    pose = pose + pose_delta;
+    pose_delta = pose * pose_delta * pose.inverse();
+    pose = pose_delta * pose;
   }
   return pose;
 }
@@ -501,11 +493,11 @@ Pose2D Slam::EncoderToPose2D(double left, double right, double tread) {
 }
 
 void Slam::UpdatePoseWithPose(Pose2D pose) {
-  this->pose_ = this->pose_ + pose;
+  this->pose_ = pose * this->pose_;
 }
 
 void Slam::UpdatePoseWithEncoder(double left, double right, double tread) {
-  pose_ = pose_ + EncoderToPose2D(left, right, tread);
+  pose_ = EncoderToPose2D(left, right, tread) * pose_;
   if (pose_update_callback)
     pose_update_callback(pose_);
 }
@@ -551,7 +543,7 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
     // update pose
     double ratio;
     Pose2D pose_delta = closest_scan->ICP(scan, &ratio);
-    pose_ = closest_scan->get_pose() + pose_delta;
+    pose_ = pose_delta * closest_scan->get_pose();
   } else {
     // add key scan
 #ifdef USE_ISAM
