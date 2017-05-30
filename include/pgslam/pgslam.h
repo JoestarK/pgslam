@@ -60,7 +60,7 @@ class LaserScan {
   LaserScan(std::vector<Echo> echos, Pose2D pose);
   Pose2D get_pose() const;
   void set_pose(Pose2D pose);
-  const std::vector<Eigen::Vector2d> & get_points();
+  const Eigen::Matrix2Xd& get_points();
   Pose2D ICP(const LaserScan &scan, double *ratio);
   double get_max_x_in_world();
   double get_min_x_in_world();
@@ -74,8 +74,8 @@ class LaserScan {
       std::vector<Eigen::Vector2d> scan, double *ratio, Pose2D reference_pose);
 
  private:
-  std::vector<Eigen::Vector2d> points_self_;
-  std::vector<Eigen::Vector2d> points_world_;
+  std::vector<Eigen::Vector2d> points_;
+  Eigen::Matrix2Xd points_world_;
   Pose2D pose_;
   bool world_transformed_flag_;
   void UpdateToWorld();

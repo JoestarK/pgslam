@@ -104,7 +104,7 @@ Eigen::Vector2d Echo::get_point() {
 
 LaserScan::LaserScan(std::vector<Echo> echos) {
   for (size_t i = 0; i < echos.size(); i++)
-    points_self_.push_back(echos[i].get_point());
+    points_.push_back(echos[i].get_point());
   world_transformed_flag_ = false;
 
   match_threshold_ = 0.1;
@@ -113,7 +113,7 @@ LaserScan::LaserScan(std::vector<Echo> echos) {
 
 LaserScan::LaserScan(std::vector<Echo> echos, Pose2D pose) {
   for (size_t i = 0; i < echos.size(); i++)
-    points_self_.push_back(echos[i].get_point());
+    points_.push_back(echos[i].get_point());
   pose_ = pose;
   world_transformed_flag_ = false;
 
@@ -130,7 +130,7 @@ void LaserScan::set_pose(Pose2D pose) {
   world_transformed_flag_ = false;
 }
 
-const std::vector<Eigen::Vector2d> & LaserScan::get_points() {
+const Eigen::Matrix2Xd& LaserScan::get_points() {
   UpdateToWorld();
   return points_world_;
 }
@@ -138,7 +138,7 @@ const std::vector<Eigen::Vector2d> & LaserScan::get_points() {
 void LaserScan::UpdateToWorld() {
   if (world_transformed_flag_) return;
 
-  std::vector<Eigen::Vector2d>().swap(points_world_);
+  points_world_.resize(Eigen::NoChange, points_.size());
 
   max_x_ = 0.0;
   min_x_ = 0.0;
@@ -146,9 +146,9 @@ void LaserScan::UpdateToWorld() {
   min_y_ = 0.0;
 
   auto t = pose_.ToTransform();
-  for (size_t i = 0; i < points_self_.size(); i++) {
-    Eigen::Vector2d p = t * points_self_[i];
-    points_world_.push_back(p);
+  for (size_t i = 0; i < points_.size(); i++) {
+    Eigen::Vector2d p = t * points_[i];
+    points_world_.col(i) = p;
     if (p.x() > max_x_) max_x_ = p.x();
     if (p.x() < min_x_) min_x_ = p.x();
     if (p.y() > max_y_) max_y_ = p.y();
@@ -169,8 +169,8 @@ LaserScan::transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose) {
 }
 
 Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
-  std::vector<Eigen::Vector2d> scan_ref = points_self_;
-  std::vector<Eigen::Vector2d> scan = scan_.points_self_;
+  std::vector<Eigen::Vector2d> scan_ref = points_;
+  std::vector<Eigen::Vector2d> scan = scan_.points_;
   Pose2D reference_pose = scan_.get_pose() * pose_.inverse();
 
   if (scan_ref.size() < 2 || scan.size() < 2) {
