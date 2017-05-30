@@ -70,11 +70,9 @@ class LaserScan {
  private:
   std::vector<Eigen::Vector2d>
     transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose);
-  Pose2D icp(std::vector<Eigen::Vector2d> scan_ref,
-      std::vector<Eigen::Vector2d> scan, double *ratio, Pose2D reference_pose);
 
  private:
-  std::vector<Eigen::Vector2d> points_;
+  Eigen::Matrix2Xd points_;
   Eigen::Matrix2Xd points_world_;
   Pose2D pose_;
   bool world_transformed_flag_;

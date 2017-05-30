@@ -103,8 +103,9 @@ Eigen::Vector2d Echo::get_point() {
 }
 
 LaserScan::LaserScan(std::vector<Echo> echos) {
+  points_.resize(Eigen::NoChange, echos.size());
   for (size_t i = 0; i < echos.size(); i++)
-    points_.push_back(echos[i].get_point());
+    points_.col(i) = echos[i].get_point();
   world_transformed_flag_ = false;
 
   match_threshold_ = 0.1;
@@ -112,8 +113,9 @@ LaserScan::LaserScan(std::vector<Echo> echos) {
 }
 
 LaserScan::LaserScan(std::vector<Echo> echos, Pose2D pose) {
+  points_.resize(Eigen::NoChange, echos.size());
   for (size_t i = 0; i < echos.size(); i++)
-    points_.push_back(echos[i].get_point());
+    points_.col(i) = echos[i].get_point();
   pose_ = pose;
   world_transformed_flag_ = false;
 
@@ -138,7 +140,7 @@ const Eigen::Matrix2Xd& LaserScan::get_points() {
 void LaserScan::UpdateToWorld() {
   if (world_transformed_flag_) return;
 
-  points_world_.resize(Eigen::NoChange, points_.size());
+  points_world_.resize(Eigen::NoChange, points_.cols());
 
   max_x_ = 0.0;
   min_x_ = 0.0;
@@ -146,8 +148,8 @@ void LaserScan::UpdateToWorld() {
   min_y_ = 0.0;
 
   auto t = pose_.ToTransform();
-  for (size_t i = 0; i < points_.size(); i++) {
-    Eigen::Vector2d p = t * points_[i];
+  for (size_t i = 0; i < points_.cols(); i++) {
+    Eigen::Vector2d p = t * points_.col(i);
     points_world_.col(i) = p;
     if (p.x() > max_x_) max_x_ = p.x();
     if (p.x() < min_x_) min_x_ = p.x();
@@ -169,8 +171,14 @@ LaserScan::transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose) {
 }
 
 Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
-  std::vector<Eigen::Vector2d> scan_ref = points_;
-  std::vector<Eigen::Vector2d> scan = scan_.points_;
+  std::vector<Eigen::Vector2d> scan_ref;
+  std::vector<Eigen::Vector2d> scan;
+  for (int i = 0; i < points_.cols(); i++) {
+    scan_ref.push_back(points_.col(i));
+  }
+  for (int i = 0; i < scan_.points_.cols(); i++) {
+    scan.push_back(scan_.points_.col(i));
+  }
   Pose2D reference_pose = scan_.get_pose() * pose_.inverse();
 
   if (scan_ref.size() < 2 || scan.size() < 2) {
