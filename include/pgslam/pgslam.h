@@ -68,15 +68,13 @@ class LaserScan {
   double get_min_y_in_world();
 
  private:
-  std::vector<Eigen::Vector2d>
-    transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose);
+  void UpdateToWorld();
 
  private:
   Eigen::Matrix2Xd points_;
   Eigen::Matrix2Xd points_world_;
   Pose2D pose_;
   bool world_transformed_flag_;
-  void UpdateToWorld();
   double max_x_;
   double min_x_;
   double max_y_;

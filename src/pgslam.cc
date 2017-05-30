@@ -160,92 +160,77 @@ void LaserScan::UpdateToWorld() {
   world_transformed_flag_ = true;
 }
 
-std::vector<Eigen::Vector2d>
-LaserScan::transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose) {
-  std::vector<Eigen::Vector2d> v2(v.size());
-  auto t = pose.ToTransform();
-  for (size_t i = 0; i < v.size(); i++) {
-    v2[i] = t * v[i];
-  }
-  return v2;
-}
-
 Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
-  std::vector<Eigen::Vector2d> scan;
-  for (int i = 0; i < scan_.points_.cols(); i++) {
-    scan.push_back(scan_.points_.col(i));
-  }
   Pose2D reference_pose = scan_.get_pose() * pose_.inverse();
 
-  size_t insert_num = 7;
-  Eigen::Matrix2Xd scan_ref;
-  scan_ref.resize(Eigen::NoChange, points_.cols() * insert_num);
+  // interpolate
+  size_t interpolate_num = 7;
+  Eigen::Matrix2Xd points_ref;
+  points_ref.resize(Eigen::NoChange, points_.cols() * interpolate_num);
   for (size_t i = 0; i < points_.cols() - 1; i++) {
-    for (size_t j = 0; j < insert_num; j++) {
+    for (size_t j = 0; j < interpolate_num; j++) {
       Eigen::Vector2d curr = points_.col(i + 0);
       Eigen::Vector2d next = points_.col(i + 1);
-      scan_ref.col(insert_num * i + j) = (next - curr) / insert_num * j + curr;
+      double gain = static_cast<double>(j) / interpolate_num;
+      points_ref.col(interpolate_num * i + j) = (next - curr) * gain + curr;
     }
   }
 
+  // construct kd tree
   kd_tree_2d::KDTree2D tree;
-  tree.Construct(scan_ref);
-  std::vector<Eigen::Vector2d> scan_origin = scan;
+  tree.Construct(points_ref);
+
+  // iterate
   Pose2D pose = reference_pose;
-  for (int i = 0; i < 20; i++) {
-    scan = transform(scan_origin, pose);
+  for (int i = 0; i < 12; i++) {
+    Eigen::Matrix2Xd points = pose.ToTransform() * scan_.points_;
 
     // store the closest point
-    std::vector<Eigen::Vector2d>    near = scan;
+    Eigen::Matrix2Xd near = points;
     // to trace some points have a same closest point
-    std::vector<std::vector<int>> trace_back(scan_ref.cols());
+    std::vector<std::vector<int>> trace_back(points_ref.cols());
     // true: effective point; false: non-effective point;
-    std::vector<bool> mask(scan.size());
+    std::vector<bool> mask(points.cols());
 
     // search and save nearest point
     int match_count = 0;
-    for (size_t i=0; i < scan.size(); i++) {
-      Eigen::Vector2d point = scan[i];
+    for (size_t i=0; i < points.cols(); i++) {
+      Eigen::Vector2d point = points.col(i);
 
-      size_t index = tree.NearestIndex(scan[i]);
+      size_t index = tree.NearestIndex(points.col(i));
 
-      if (index == -1) {
-        if (ratio != nullptr)
-          *ratio = 0.0;
-        return Pose2D();
-      }
       trace_back[index].push_back(i);
-      Eigen::Vector2d closest = scan_ref.col(index);
+      Eigen::Vector2d closest = points_ref.col(index);
 
-      double distance = (point-closest).norm();
+      double distance = (point - closest).norm();
       if (distance < match_threshold_)
         match_count++;
       if (distance < dist_threshold_) {
-        near[i] = closest;
+        near.col(i) = closest;
         mask[i] = true;
       } else {
         mask[i] = false;
       }
     }
     if (ratio != nullptr)
-      *ratio = static_cast<double>(match_count) / scan.size();
+      *ratio = static_cast<double>(match_count) / points.cols();
 
     // disable the points have one same nearest point
     for (size_t i = 0; i < trace_back.size(); i++)
       if (trace_back[i].size() > 3) {
         for (size_t j = 0; j < trace_back[i].size(); j++) {
           mask[trace_back[i][j]] = false;
-          near[trace_back[i][j]] = scan[trace_back[i][j]];
+          near.col(trace_back[i][j]) = points.col(trace_back[i][j]);
         }
       }
 
     // disable the farest 10% point
     std::vector<double> max_distance;
     std::vector<int>    max_index;
-    max_distance.resize(scan.size() / 10, 0.0);
-    max_index.resize(scan.size() / 10, 0);
-    for (size_t i = 0; i < scan.size(); i++) {
-      double distance = (scan[i]-near[i]).norm();
+    max_distance.resize(points.cols() / 10, 0.0);
+    max_index.resize(points.cols() / 10, 0);
+    for (size_t i = 0; i < points.cols(); i++) {
+      double distance = (points.col(i) - near.col(i)).norm();
       for (size_t j = 1; j < max_distance.size(); j++) {
         if (distance > max_distance[j]) {
           max_distance[j-1] = max_distance[j];
@@ -267,9 +252,9 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     // calc center
     Eigen::Vector2d center(0, 0);
     int count = 0;
-    for (size_t i = 0; i < scan.size(); i++)
+    for (size_t i = 0; i < points.cols(); i++)
       if (mask[i]) {
-        center += scan[i];
+        center += points.col(i);
         count++;
       }
     if (count == 0) {
@@ -283,17 +268,17 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     // calc the tramsform
     Eigen::Vector2d move = Eigen::Vector2d(0.0, 0.0);
     double rot = 0.0;
-    for (size_t i = 0; i < scan.size(); i++) {
+    for (size_t i = 0; i < points.cols(); i++) {
       if (mask[i] == false) continue;
-      Eigen::Vector2d delta = near[i] - scan[i];
+      Eigen::Vector2d delta = near.col(i) - points.col(i);
       double length = delta.norm();
       if (length > 0) {
         delta.normalize();
         delta *= (length < 0.05) ? length : sqrt(length * 20) / 20;
       }
       move += delta;
-      Eigen::Vector2d p = scan[i] - center;
-      Eigen::Vector2d q = near[i] - center;
+      Eigen::Vector2d p = points.col(i) - center;
+      Eigen::Vector2d q = near.col(i) - center;
       if (p.norm() < DBL_EPSILON*2) continue;
 
       rot += (p.x()*q.y() - p.y()*q.x()) / p.norm() / sqrt(p.norm());
@@ -305,8 +290,8 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     move *= 2.0;
     rot *= 1.0;
 
-    Pose2D pose_delta = Pose2D(move.x(), move.y(), rot);
-    pose_delta = pose * pose_delta * pose.inverse();
+    // update pose
+    Pose2D pose_delta = pose * Pose2D(move.x(), move.y(), rot) * pose.inverse();
     pose = pose_delta * pose;
   }
   return pose;
