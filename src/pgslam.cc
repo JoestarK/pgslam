@@ -171,28 +171,20 @@ LaserScan::transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose) {
 }
 
 Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
-  std::vector<Eigen::Vector2d> scan_ref;
   std::vector<Eigen::Vector2d> scan;
-  for (int i = 0; i < points_.cols(); i++) {
-    scan_ref.push_back(points_.col(i));
-  }
   for (int i = 0; i < scan_.points_.cols(); i++) {
     scan.push_back(scan_.points_.col(i));
   }
   Pose2D reference_pose = scan_.get_pose() * pose_.inverse();
 
-  if (scan_ref.size() < 2 || scan.size() < 2) {
-    std::cout << "Error: scan.size() < 2";
-    return reference_pose;
-  }
-
   size_t insert_num = 7;
-  auto scan_cache = scan_ref;
-  scan_ref.resize(scan_cache.size()*insert_num);
-  for (size_t i = 0; i < scan_cache.size() - 1; i++) {
+  Eigen::Matrix2Xd scan_ref;
+  scan_ref.resize(Eigen::NoChange, points_.cols() * insert_num);
+  for (size_t i = 0; i < points_.cols() - 1; i++) {
     for (size_t j = 0; j < insert_num; j++) {
-      scan_ref[insert_num*i+j] = (scan_cache[i+1] - scan_cache[i]) /
-        insert_num * j + scan_cache[i];
+      Eigen::Vector2d curr = points_.col(i + 0);
+      Eigen::Vector2d next = points_.col(i + 1);
+      scan_ref.col(insert_num * i + j) = (next - curr) / insert_num * j + curr;
     }
   }
 
@@ -206,7 +198,7 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     // store the closest point
     std::vector<Eigen::Vector2d>    near = scan;
     // to trace some points have a same closest point
-    std::vector<std::vector<int>> trace_back(scan_ref.size());
+    std::vector<std::vector<int>> trace_back(scan_ref.cols());
     // true: effective point; false: non-effective point;
     std::vector<bool> mask(scan.size());
 
@@ -223,7 +215,7 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
         return Pose2D();
       }
       trace_back[index].push_back(i);
-      Eigen::Vector2d closest = scan_ref[index];
+      Eigen::Vector2d closest = scan_ref.col(index);
 
       double distance = (point-closest).norm();
       if (distance < match_threshold_)

@@ -107,6 +107,23 @@ void KDTree2D::Construct(const std::vector<Eigen::Vector2d> &points) {
   }
 }
 
+void KDTree2D::Construct(const Eigen::Matrix2Xd& points) {
+  std::vector<size_t> index;
+  for (size_t i = 0; i < points.cols(); i++)
+    index.push_back(i);
+  unsigned int seed = time(NULL);
+  for (size_t i = 0; i < index.size() / 2; i++) {
+    size_t a = rand_r(&seed) % index.size();
+    size_t b = rand_r(&seed) % index.size();
+    size_t t = index[a];
+    index[a] = index[b];
+    index[b] = t;
+  }
+  for (size_t i = 0; i < index.size(); i++) {
+    insert(points.col(index[i]), index[i]);
+  }
+}
+
 Eigen::Vector2d KDTree2D::Nearest(Eigen::Vector2d point) {
   assert(root != nullptr);
   auto result = root->Nearest(point);

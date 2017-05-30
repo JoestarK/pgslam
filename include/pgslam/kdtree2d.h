@@ -31,6 +31,7 @@ class KDTree2D {
  public:
   KDTree2D();
   void Construct(const std::vector<Eigen::Vector2d> &points);
+  void Construct(const Eigen::Matrix2Xd& points);
   Eigen::Vector2d Nearest(Eigen::Vector2d point);
   size_t NearestIndex(Eigen::Vector2d point);
   ~KDTree2D();
