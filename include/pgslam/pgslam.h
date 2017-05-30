@@ -27,10 +27,11 @@ class Pose2D {
   double y() const;
   double theta() const;
   Pose2D operator *(Pose2D p) const;
-  Pose2D operator -(Pose2D p) const;
   Pose2D inverse() const;
   Eigen::Vector2d pos() const;
-  std::string to_string() const;
+  Eigen::Rotation2D<double> ToRotation() const;
+  Eigen::Transform<double, 2, Eigen::Affine> ToTransform() const;
+  std::string ToJson() const;
  private:
   double x_;
   double y_;

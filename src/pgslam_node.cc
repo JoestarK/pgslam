@@ -236,7 +236,7 @@ RosLaserScan_T_PGSlamLaserScan(const sensor_msgs::LaserScan& msg) {
 void scanCallback(const sensor_msgs::LaserScan& msg) {
   static pgslam::Pose2D odom_old;
   pgslam::Pose2D odom_new = ListenPose2D(odom_frame, base_frame);
-  pgslam::Pose2D odom_delta = odom_new - odom_old;
+  pgslam::Pose2D odom_delta = odom_new * odom_old.inverse();
   odom_old = odom_new;
   slam.UpdatePoseWithPose(odom_delta);
   slam.UpdatePoseWithLaserScan(RosLaserScan_T_PGSlamLaserScan(msg));

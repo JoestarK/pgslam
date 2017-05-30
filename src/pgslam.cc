@@ -47,34 +47,37 @@ double Pose2D::y() const { return y_; }
 double Pose2D::theta () const { return theta_; }
 
 Pose2D Pose2D::operator *(Pose2D p) const {
-  Eigen::Vector2d v = p.pos() + Eigen::Rotation2D<double>(p.theta_) * pos();
+  Eigen::Vector2d v = p.pos() + p.ToRotation() * pos();
   return Pose2D(v.x(), v.y(), theta_ + p.theta_);
 }
 
 Pose2D Pose2D::inverse() const {
-  Eigen::Vector2d v = Eigen::Rotation2D<double>(-theta_) * pos();
+  Eigen::Vector2d v = ToRotation().inverse() * pos();
   return Pose2D (-v.x(), -v.y(), -theta_);
-}
-
-Pose2D Pose2D::operator -(Pose2D p) const {
-  return *this * p.inverse();
 }
 
 Eigen::Vector2d Pose2D::pos() const {
   return Eigen::Vector2d(x_, y_);
 }
 
-std::string Pose2D::to_string() const {
+Eigen::Rotation2D<double> Pose2D::ToRotation() const {
+  return Eigen::Rotation2D<double>(theta_);
+}
+
+Eigen::Transform<double, 2, Eigen::Affine> Pose2D::ToTransform() const {
+  Eigen::Transform<double, 2, Eigen::Affine> transform;
+  transform.setIdentity();
+  transform.translate(pos());
+  transform.rotate(ToRotation());
+  return transform;
+}
+
+std::string Pose2D::ToJson() const {
   std::stringstream ss;
-  ss << "x:";
-  ss << std::setw(7) << setiosflags(std::ios::fixed) << std::setprecision(4);
-  ss << x_;
-  ss << " y:";
-  ss << std::setw(7) << setiosflags(std::ios::fixed) << std::setprecision(4);
-  ss << y_;
-  ss << " theta:";
-  ss << std::setw(7) << setiosflags(std::ios::fixed) << std::setprecision(4);
-  ss << theta_;
+  ss << setiosflags(std::ios::fixed) << std::setprecision(4);
+  ss << "{\"x\":" << x_;
+  ss << ",\"y\":"  << y_;
+  ss << ",\"theta\":" << theta_ << "}";
   return ss.str();
 }
 
@@ -142,10 +145,9 @@ void LaserScan::UpdateToWorld() {
   max_y_ = 0.0;
   min_y_ = 0.0;
 
-  Eigen::Rotation2D<double> rot(pose_.theta_);
-  Eigen::Vector2d move = pose_.pos();
+  auto t = pose_.ToTransform();
   for (size_t i = 0; i < points_self_.size(); i++) {
-    Eigen::Vector2d p = rot * points_self_[i] + move;
+    Eigen::Vector2d p = t * points_self_[i];
     points_world_.push_back(p);
     if (p.x() > max_x_) max_x_ = p.x();
     if (p.x() < min_x_) min_x_ = p.x();
@@ -156,14 +158,12 @@ void LaserScan::UpdateToWorld() {
   world_transformed_flag_ = true;
 }
 
-  std::vector<Eigen::Vector2d>
+std::vector<Eigen::Vector2d>
 LaserScan::transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose) {
   std::vector<Eigen::Vector2d> v2(v.size());
-  Eigen::Rotation2D<double> rot(pose.theta_);
-  Eigen::Vector2d move(pose.x_, pose.y_);
+  auto t = pose.ToTransform();
   for (size_t i = 0; i < v.size(); i++) {
-    v2[i] = rot * v[i];
-    v2[i] += move;
+    v2[i] = t * v[i];
   }
   return v2;
 }
@@ -171,7 +171,7 @@ LaserScan::transform(const std::vector<Eigen::Vector2d> &v, Pose2D pose) {
 Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
   std::vector<Eigen::Vector2d> scan_ref = points_self_;
   std::vector<Eigen::Vector2d> scan = scan_.points_self_;
-  Pose2D reference_pose = scan_.get_pose() - pose_;
+  Pose2D reference_pose = scan_.get_pose() * pose_.inverse();
 
   if (scan_ref.size() < 2 || scan.size() < 2) {
     std::cout << "Error: scan.size() < 2";
@@ -513,7 +513,7 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
     graph_slam_.AddPose2dFactor(0, pose_, 1);
 #endif
     std::cout << "add key scan " << scans_.size() << ": "
-      << pose_.to_string() << std::endl;
+      << pose_.ToJson() << std::endl;
     if (map_update_callback)
       map_update_callback();
     return;
@@ -581,7 +581,7 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
     scans_.push_back(scan);
 #endif
     std::cout << "add key scan " << scans_.size() << ": "
-      << pose_.to_string() << std::endl;
+      << pose_.ToJson() << std::endl;
 
     if (map_update_callback)
       map_update_callback();
