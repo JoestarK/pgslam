@@ -19,7 +19,7 @@ ros::Publisher node_pub;
 ros::Publisher factor_pub;
 ros::Publisher map_pub;
 nav_msgs::OccupancyGrid global_map;
-tf::TransformListener * plistener;
+tf::TransformListener *plistener;
 
 pgslam::Slam slam;
 
@@ -43,12 +43,12 @@ void draw_graph() {
   points.color.g = 0.5f;
   points.color.a = 1.0;
 
-  auto scans = slam.get_scans();
+  auto scans = slam.scans();
   scans[0].set_pose(pgslam::Pose2D());
   for (int i = 0; i < scans.size(); i++) {
     geometry_msgs::Point p;
-    p.x = scans[i].get_pose().pos().x();
-    p.y = scans[i].get_pose().pos().y();
+    p.x = scans[i].pose().pos().x();
+    p.y = scans[i].pose().pos().y();
     p.z = 0;
     points.points.push_back(p);
   }
@@ -67,7 +67,7 @@ void draw_graph() {
   line_list.color.a = 1.0;
 
 #ifdef USE_ISAM
-  auto factors = slam.get_factors();
+  auto factors = slam.factors();
   for (size_t i = 0; i < factors.size(); i++) {
     geometry_msgs::Point first;
     first.x = factors[i].first.x();
@@ -92,16 +92,16 @@ void draw_map() {
   double min_x = 0.0;
   double max_y = 0.0;
   double min_y = 0.0;
-  auto scans = slam.get_scans();
+  auto scans = slam.scans();
   for (size_t i = 0; i < scans.size(); i++) {
-    if (max_x < scans[i].get_max_x_in_world())
-      max_x = scans[i].get_max_x_in_world();
-    if (min_x > scans[i].get_min_x_in_world())
-      min_x = scans[i].get_min_x_in_world();
-    if (max_y < scans[i].get_max_y_in_world())
-      max_y = scans[i].get_max_y_in_world();
-    if (min_y > scans[i].get_min_y_in_world())
-      min_y = scans[i].get_min_y_in_world();
+    if (max_x < scans[i].max_x_in_world())
+      max_x = scans[i].max_x_in_world();
+    if (min_x > scans[i].min_x_in_world())
+      min_x = scans[i].min_x_in_world();
+    if (max_y < scans[i].max_y_in_world())
+      max_y = scans[i].max_y_in_world();
+    if (min_y > scans[i].min_y_in_world())
+      min_y = scans[i].min_y_in_world();
   }
   double max_x_i = static_cast<int>((max_x + 1.0) * 10) / 10.0;
   double min_x_i = static_cast<int>((min_x - 1.0) * 10) / 10.0;
@@ -119,8 +119,8 @@ void draw_map() {
   // draw map into eigen map
   Eigen::Vector2d source(min_x_i, min_y_i);
   for (int i = 0; i < scans.size(); i++) {  // for every scan
-    Eigen::Vector2d origin = scans[i].get_pose().pos();
-    auto points = scans[i].get_points();
+    Eigen::Vector2d origin = scans[i].pose().pos();
+    auto points = scans[i].points();
     for (int j = 1; j < points.cols(); j++) {  // for every point
       Eigen::Vector2d v = points.col(j) - origin;
       if (v.norm() > draw_range)
@@ -227,7 +227,7 @@ RosLaserScan_T_PGSlamLaserScan(const sensor_msgs::LaserScan& msg) {
   std::vector<pgslam::Echo> echos;
   size_t i = 0;
   for (double angle = msg.angle_min; angle <= msg.angle_max;
-      angle+=msg.angle_increment, i++) {
+      angle += msg.angle_increment, i++) {
     echos.push_back(pgslam::Echo(msg.ranges[i], angle, msg.intensities[i], 0));
   }
   return pgslam::LaserScan(echos);

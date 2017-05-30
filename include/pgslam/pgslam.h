@@ -47,25 +47,25 @@ class Echo {
   int64_t time_stamp_;
  public:
   Echo(double range, double angle, double intensity, int64_t time_stamp);
-  double get_range();
-  double get_angle();
-  double get_intensity();
-  int64_t get_time_stamp();
-  Eigen::Vector2d get_point();
+  double range() const;
+  double angle() const;
+  double intensity() const;
+  int64_t time_stamp() const;
+  Eigen::Vector2d point() const;
 };
 
 class LaserScan {
  public:
   explicit LaserScan(std::vector<Echo> echos);
   LaserScan(std::vector<Echo> echos, Pose2D pose);
-  Pose2D get_pose() const;
+  Pose2D pose() const;
   void set_pose(Pose2D pose);
-  const Eigen::Matrix2Xd& get_points();
+  const Eigen::Matrix2Xd& points();
   Pose2D ICP(const LaserScan &scan, double *ratio);
-  double get_max_x_in_world();
-  double get_min_x_in_world();
-  double get_max_y_in_world();
-  double get_min_y_in_world();
+  double max_x_in_world();
+  double min_x_in_world();
+  double max_y_in_world();
+  double min_y_in_world();
 
  private:
   void UpdateToWorld();
@@ -93,8 +93,8 @@ class GraphSlam {
   void AddPose2dPose2dFactor(size_t node_id_ref,
       size_t node_id, Pose2D pose_ros, double cov);
   void remove(size_t node_id);
-  std::vector<std::pair<size_t, Pose2D>> get_nodes();
-  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> get_factors();
+  std::vector<std::pair<size_t, Pose2D>> nodes();
+  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> factors();
   void clear();
   void Optimization();
 
@@ -115,10 +115,10 @@ class Slam {
   void UpdatePoseWithPose(Pose2D pose);
   void UpdatePoseWithEncoder(double left, double right, double tread);
   void UpdatePoseWithLaserScan(const LaserScan &scan);
-  Pose2D get_pose() const;
-  const std::vector<LaserScan> & get_scans();
+  Pose2D pose() const;
+  const std::vector<LaserScan> & scans();
 #ifdef USE_ISAM
-  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> get_factors();
+  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> factors();
 #endif
   void RegisterPoseUpdateCallback(std::function<void(Pose2D)> f);
   void RegisterMapUpdateCallback(std::function<void(void)> f);

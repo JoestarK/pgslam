@@ -88,15 +88,12 @@ Echo::Echo(double range, double angle, double intensity, int64_t time_stamp) {
   time_stamp_ = time_stamp;
 }
 
-double Echo::get_range() { return range_; }
+double Echo::range() const { return range_; }
+double Echo::angle() const { return angle_; }
+double Echo::intensity() const { return intensity_; }
+int64_t Echo::time_stamp() const { return time_stamp_; }
 
-double Echo::get_angle() { return angle_; }
-
-double Echo::get_intensity() { return intensity_; }
-
-int64_t Echo::get_time_stamp() { return time_stamp_; }
-
-Eigen::Vector2d Echo::get_point() {
+Eigen::Vector2d Echo::point() const {
   double x = range_ * cos(angle_);
   double y = range_ * sin(angle_);
   return Eigen::Vector2d(x, y);
@@ -105,7 +102,7 @@ Eigen::Vector2d Echo::get_point() {
 LaserScan::LaserScan(std::vector<Echo> echos) {
   points_.resize(Eigen::NoChange, echos.size());
   for (size_t i = 0; i < echos.size(); i++)
-    points_.col(i) = echos[i].get_point();
+    points_.col(i) = echos[i].point();
   world_transformed_flag_ = false;
 
   match_threshold_ = 0.1;
@@ -115,7 +112,7 @@ LaserScan::LaserScan(std::vector<Echo> echos) {
 LaserScan::LaserScan(std::vector<Echo> echos, Pose2D pose) {
   points_.resize(Eigen::NoChange, echos.size());
   for (size_t i = 0; i < echos.size(); i++)
-    points_.col(i) = echos[i].get_point();
+    points_.col(i) = echos[i].point();
   pose_ = pose;
   world_transformed_flag_ = false;
 
@@ -123,7 +120,7 @@ LaserScan::LaserScan(std::vector<Echo> echos, Pose2D pose) {
   dist_threshold_ = 1.0;
 }
 
-Pose2D LaserScan::get_pose() const {
+Pose2D LaserScan::pose() const {
   return pose_;
 }
 
@@ -132,7 +129,7 @@ void LaserScan::set_pose(Pose2D pose) {
   world_transformed_flag_ = false;
 }
 
-const Eigen::Matrix2Xd& LaserScan::get_points() {
+const Eigen::Matrix2Xd& LaserScan::points() {
   UpdateToWorld();
   return points_world_;
 }
@@ -161,7 +158,7 @@ void LaserScan::UpdateToWorld() {
 }
 
 Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
-  Pose2D reference_pose = scan_.get_pose() * pose_.inverse();
+  Pose2D reference_pose = scan_.pose() * pose_.inverse();
 
   // interpolate
   size_t interpolate_num = 7;
@@ -194,7 +191,7 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
 
     // search and save nearest point
     int match_count = 0;
-    for (size_t i=0; i < points.cols(); i++) {
+    for (size_t i = 0; i < points.cols(); i++) {
       Eigen::Vector2d point = points.col(i);
 
       size_t index = tree.NearestIndex(points.col(i));
@@ -279,9 +276,9 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
       move += delta;
       Eigen::Vector2d p = points.col(i) - center;
       Eigen::Vector2d q = near.col(i) - center;
-      if (p.norm() < DBL_EPSILON*2) continue;
+      if (p.norm() < DBL_EPSILON * 2) continue;
 
-      rot += (p.x()*q.y() - p.y()*q.x()) / p.norm() / sqrt(p.norm());
+      rot += (p.x() * q.y() - p.y() * q.x()) / p.norm() / sqrt(p.norm());
     }
     move /= count;
     rot /= count;
@@ -297,22 +294,22 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
   return pose;
 }
 
-double LaserScan::get_max_x_in_world() {
+double LaserScan::max_x_in_world() {
   UpdateToWorld();
   return max_x_;
 }
 
-double LaserScan::get_min_x_in_world() {
+double LaserScan::min_x_in_world() {
   UpdateToWorld();
   return min_x_;
 }
 
-double LaserScan::get_max_y_in_world() {
+double LaserScan::max_y_in_world() {
   UpdateToWorld();
   return max_y_;
 }
 
-double LaserScan::get_min_y_in_world() {
+double LaserScan::min_y_in_world() {
   UpdateToWorld();
   return min_y_;
 }
@@ -335,7 +332,7 @@ bool GraphSlam::check(size_t id) {
 
   // create new space
   int size = pose_nodes_.size();
-  pose_nodes_.resize(id+1);
+  pose_nodes_.resize(id + 1);
   for (size_t i = size; i < id + 1; i++)
     pose_nodes_[i] = new isam::Pose2d_Node();
   return true;
@@ -354,7 +351,7 @@ void GraphSlam::clear() {
   std::vector<isam::Pose2d_Node*>().swap(pose_nodes_);
 }
 
-std::vector<std::pair<size_t, Pose2D>> GraphSlam::get_nodes() {
+std::vector<std::pair<size_t, Pose2D>> GraphSlam::nodes() {
   std::vector<std::pair<size_t, Pose2D>> pose_id;
   // store in response
   for (size_t i = 0; i < pose_nodes_.size(); i++) {
@@ -368,11 +365,10 @@ std::vector<std::pair<size_t, Pose2D>> GraphSlam::get_nodes() {
   return pose_id;
 }
 
-std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>>
-GraphSlam::get_factors() {
+std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> GraphSlam::factors() {
   std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> factors;
   const std::list<isam::Factor*> factors_ = slam_->get_factors();
-  for (std::list<isam::Factor*>::const_iterator it=factors_.begin();
+  for (std::list<isam::Factor*>::const_iterator it = factors_.begin();
       it != factors_.end(); it++) {
     std::vector<isam::Node*> nodes = (*it)->nodes();
     if (nodes.size() == 1) continue;
@@ -449,24 +445,24 @@ void Slam::set_factor_threshold(double factor_threshold) {
     keyscan_threshold_ = factor_threshold_/2;
 }
 
-Pose2D Slam::get_pose() const {
+Pose2D Slam::pose() const {
   return pose_;
 }
 
-const std::vector<LaserScan> & Slam::get_scans() {
+const std::vector<LaserScan> & Slam::scans() {
   return scans_;
 }
 
 #ifdef USE_ISAM
-std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> Slam::get_factors() {
-  return graph_slam_.get_factors();
+std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> Slam::factors() {
+  return graph_slam_.factors();
 }
 #endif
 
 Pose2D Slam::EncoderToPose2D(double left, double right, double tread) {
-  double theta = (right-left) / tread;
+  double theta = (right - left) / tread;
   double theta_2 = theta / 2.0;
-  double arc = (right+left) / 2.0;
+  double arc = (right + left) / 2.0;
   double radius = arc / theta;
   double secant = 2 * sin(theta_2) * radius;
   if (theta == 0)
@@ -508,15 +504,15 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
   LaserScan *closest_scan = &(scans_[0]);
   double min_dist = DBL_MAX;
   for (size_t i = 0; i < scans_.size(); i++) {
-    double dist = (scans_[i].get_pose().pos() -
-        scan.get_pose().pos()).norm();
-    double delta_theta = fabs(scans_[i].get_pose().theta() -
-        scan.get_pose().theta());;
+    double dist = (scans_[i].pose().pos() -
+        scan.pose().pos()).norm();
+    double delta_theta = fabs(scans_[i].pose().theta() -
+        scan.pose().theta());;
     while (delta_theta < -M_PI) delta_theta += 2 * M_PI;
     while (delta_theta >  M_PI) delta_theta -= 2 * M_PI;
     delta_theta *= keyscan_threshold_ / (M_PI_4 * 3.0);
 
-    dist = sqrt(dist*dist + delta_theta*delta_theta);
+    dist = sqrt(dist * dist + delta_theta * delta_theta);
     if (dist < min_dist) {
       min_dist = dist;
       closest_scan = &(scans_[i]);
@@ -528,13 +524,13 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
     // update pose
     double ratio;
     Pose2D pose_delta = closest_scan->ICP(scan, &ratio);
-    pose_ = pose_delta * closest_scan->get_pose();
+    pose_ = pose_delta * closest_scan->pose();
   } else {
     // add key scan
 #ifdef USE_ISAM
     size_t constrain_count = 0;
     for (size_t i = 0; i < scans_.size(); i++) {
-      double distance = (pose_.pos() - scans_[i].get_pose().pos()).norm();
+      double distance = (pose_.pos() - scans_[i].pose().pos()).norm();
       if (distance < factor_threshold_) {
         constrain_count++;
         double ratio;
@@ -547,7 +543,7 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
     if (constrain_count > 1)
       graph_slam_.Optimization();
 
-    auto nodes = graph_slam_.get_nodes();
+    auto nodes = graph_slam_.nodes();
     for (size_t i = 0; i < nodes.size(); i++) {
       // update pose of node
       for (size_t j = 0; j < scans_.size(); j++) {
