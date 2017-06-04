@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(pgslam)
 
-set (CMAKE_BUILD_TYPE Release)
+set (CMAKE_BUILD_TYPE Debug)
+#set (CMAKE_BUILD_TYPE Release)
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O3")
 
 add_definitions (-std=c++11)
 add_definitions (-DUSE_ISAM)

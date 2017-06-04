@@ -179,7 +179,7 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
 
   // iterate
   Pose2D pose = reference_pose;
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 100; i++) {
     Eigen::Matrix2Xd points = pose.ToTransform() * scan_.points_;
 
     // store the closest point
@@ -290,6 +290,8 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
     // update pose
     Pose2D pose_delta = pose * Pose2D(move.x(), move.y(), rot) * pose.inverse();
     pose = pose_delta * pose;
+    if (pose_delta.pos().norm() < 0.001 && pose_delta.theta() < 0.001)
+      break;
   }
   return pose;
 }
