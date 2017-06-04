@@ -536,8 +536,6 @@ void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
         double ratio;
         Pose2D pose_delta = scans_[i].ICP(scan, &ratio);
         graph_slam_.AddPose2dPose2dFactor(i, scans_.size(), pose_delta, ratio);
-        if (pose_update_callback)
-          pose_update_callback(pose_);
       }
     }
     if (constrain_count > 1)
