@@ -157,8 +157,8 @@ void LaserScan::UpdateToWorld() {
   world_transformed_flag_ = true;
 }
 
-Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
-  Pose2D reference_pose = scan_.pose() * pose_.inverse();
+Pose2D LaserScan::ICP(const LaserScan &scan, double *ratio) {
+  Pose2D reference_pose = scan.pose() * pose_.inverse();
 
   // interpolate
   size_t interpolate_num = 7;
@@ -180,7 +180,7 @@ Pose2D LaserScan::ICP(const LaserScan &scan_, double *ratio) {
   // iterate
   Pose2D pose = reference_pose;
   for (int i = 0; i < 100; i++) {
-    Eigen::Matrix2Xd points = pose.ToTransform() * scan_.points_;
+    Eigen::Matrix2Xd points = pose.ToTransform() * scan.points_;
 
     // store the closest point
     Eigen::Matrix2Xd near = points;
@@ -485,8 +485,8 @@ void Slam::UpdatePoseWithEncoder(double left, double right, double tread) {
     pose_update_callback(pose_);
 }
 
-void Slam::UpdatePoseWithLaserScan(const LaserScan &scan_) {
-  LaserScan scan = scan_;
+void Slam::UpdatePoseWithLaserScan(const LaserScan &_scan) {
+  LaserScan scan = _scan;
   scan.set_pose(pose_);
 
   // first scan
